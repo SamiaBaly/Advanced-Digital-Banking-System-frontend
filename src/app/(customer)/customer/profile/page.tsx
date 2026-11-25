@@ -1,0 +1,445 @@
+
+"use client";
+
+import { useState, useSyncExternalStore } from "react";
+import {
+  UserRound,
+  Mail,
+  Phone,
+  ShieldCheck,
+  LockKeyhole,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  KeyRound,
+} from "lucide-react";
+
+import { getUser, type AuthUser } from "@/lib/auth";
+import { useChangePasswordMutation } from "@/redux/api/securityApi";
+
+// Cached localStorage snapshot
+let cachedRawUser: string | null | undefined;
+let cachedUser: AuthUser | null = null;
+
+const subscribe = (callback: () => void) => {
+  window.addEventListener("storage", callback);
+
+  return () => {
+    window.removeEventListener("storage", callback);
+  };
+};
+
+const getSnapshot = (): AuthUser | null => {
+  const rawUser = localStorage.getItem("banking_user");
+
+  // Return the same object reference if localStorage has not changed.
+  if (rawUser === cachedRawUser) {
+    return cachedUser;
+  }
+
+  cachedRawUser = rawUser;
+
+  if (!rawUser) {
+    cachedUser = null;
+    return cachedUser;
+  }
+
+  try {
+    cachedUser = JSON.parse(rawUser) as AuthUser;
+  } catch {
+    cachedUser = null;
+  }
+
+  return cachedUser;
+};
+
+// Server and initial hydration snapshot must match.
+const getServerSnapshot = (): AuthUser | null => null;
+
+export default function CustomerProfilePage() {
+  const user = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot
+  );
+
+  const [changePassword, { isLoading }] =
+    useChangePasswordMutation();
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const handlePasswordChange = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
+    e.preventDefault();
+
+    setSuccessMessage("");
+    setErrorMessage("");
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setErrorMessage("Please fill in all password fields.");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setErrorMessage(
+        "New password must contain at least 8 characters."
+      );
+      return;
+    }
+
+    if (newPassword.length > 128) {
+      setErrorMessage(
+        "New password cannot exceed 128 characters."
+      );
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setErrorMessage(
+        "New password and confirmation do not match."
+      );
+      return;
+    }
+
+    if (currentPassword === newPassword) {
+      setErrorMessage(
+        "New password must be different from your current password."
+      );
+      return;
+    }
+
+    try {
+      const response = await changePassword({
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      }).unwrap();
+
+      setSuccessMessage(
+        response.message || "Password changed successfully."
+      );
+
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error: unknown) {
+      const apiError = error as {
+        data?: { message?: string };
+      };
+
+      setErrorMessage(
+        apiError.data?.message ||
+        "Unable to change password. Please try again."
+      );
+    }
+  };
+
+  const inputClass =
+    "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-[#176B87] focus:ring-2 focus:ring-[#176B87]/15 dark:border-[#29445F] dark:bg-[#102A43] dark:text-white dark:placeholder:text-slate-500";
+
+  const labelClass =
+    "mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-200";
+
+  const passwordField = (
+    label: string,
+    value: string,
+    setter: (value: string) => void,
+    visible: boolean,
+    toggle: () => void,
+    placeholder: string
+  ) => (
+    <div>
+      <label className={labelClass}>{label}</label>
+
+      <div className="relative">
+        <input
+          type={visible ? "text" : "password"}
+          value={value}
+          onChange={(e) => setter(e.target.value)}
+          placeholder={placeholder}
+          className={`${inputClass} pr-12`}
+          autoComplete="new-password"
+          disabled={isLoading}
+        />
+
+        <button
+          type="button"
+          onClick={toggle}
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-[#176B87] dark:hover:text-[#14B8A6]"
+          aria-label={visible ? "Hide password" : "Show password"}
+        >
+          {visible ? (
+            <EyeOff size={19} />
+          ) : (
+            <Eye size={19} />
+          )}
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-[#F4F7FB] px-4 py-6 dark:bg-[#0B1726] sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-5xl space-y-7">
+
+        {/* Page Header */}
+        <div>
+          <p className="mb-2 text-sm font-semibold text-[#176B87] dark:text-[#14B8A6]">
+            CUSTOMER ACCOUNT
+          </p>
+
+          <h1 className="text-2xl font-bold text-[#102A43] dark:text-white sm:text-3xl">
+            My Profile
+          </h1>
+
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            Manage your personal information and account security.
+          </p>
+        </div>
+
+        {/* Personal Information */}
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-[#29445F] dark:bg-[#14283D]">
+          <div className="border-b border-slate-100 px-6 py-5 dark:border-[#29445F]">
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl bg-[#176B87]/10 p-3 text-[#176B87] dark:bg-[#14B8A6]/10 dark:text-[#14B8A6]">
+                <UserRound size={22} />
+              </div>
+
+              <div>
+                <h2 className="font-bold text-[#102A43] dark:text-white">
+                  Personal Information
+                </h2>
+
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Your registered account details
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6">
+            {user ? (
+              <>
+                <div className="mb-7 flex flex-col items-center gap-4 sm:flex-row">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[#102A43] to-[#176B87] text-3xl font-bold text-white">
+                    {user.fullName?.charAt(0)?.toUpperCase() || "U"}
+                  </div>
+
+                  <div className="text-center sm:text-left">
+                    <h3 className="text-xl font-bold text-[#102A43] dark:text-white">
+                      {user.fullName}
+                    </h3>
+
+                    <p className="mt-1 text-sm capitalize text-slate-500 dark:text-slate-400">
+                      {user.role?.replace("_", " ")}
+                    </p>
+
+                    <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold capitalize text-green-700 dark:bg-green-500/10 dark:text-green-400">
+                      <ShieldCheck size={14} />
+                      {user.userStatus || "Active"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <div className="rounded-xl bg-[#F4F7FB] p-4 dark:bg-[#0B1726]">
+                    <div className="mb-2 flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                      <UserRound size={17} />
+                      <span className="text-xs font-semibold">
+                        FULL NAME
+                      </span>
+                    </div>
+
+                    <p className="break-words font-semibold text-[#102A43] dark:text-white">
+                      {user.fullName}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl bg-[#F4F7FB] p-4 dark:bg-[#0B1726]">
+                    <div className="mb-2 flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                      <Mail size={17} />
+                      <span className="text-xs font-semibold">
+                        EMAIL ADDRESS
+                      </span>
+                    </div>
+
+                    <p className="break-all font-semibold text-[#102A43] dark:text-white">
+                      {user.email}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl bg-[#F4F7FB] p-4 dark:bg-[#0B1726]">
+                    <div className="mb-2 flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                      <Phone size={17} />
+                      <span className="text-xs font-semibold">
+                        PHONE NUMBER
+                      </span>
+                    </div>
+
+                    <p className="font-semibold text-[#102A43] dark:text-white">
+                      {user.phone || "Not provided"}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl bg-[#F4F7FB] p-4 dark:bg-[#0B1726]">
+                    <div className="mb-2 flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                      <ShieldCheck size={17} />
+                      <span className="text-xs font-semibold">
+                        ACCOUNT STATUS
+                      </span>
+                    </div>
+
+                    <p className="font-semibold capitalize text-[#102A43] dark:text-white">
+                      {user.userStatus || "Active"}
+                    </p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <p className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                Loading profile information...
+              </p>
+            )}
+          </div>
+        </section>
+
+        {/* Change Password */}
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-[#29445F] dark:bg-[#14283D]">
+          <div className="border-b border-slate-100 px-6 py-5 dark:border-[#29445F]">
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl bg-[#14B8A6]/10 p-3 text-[#14B8A6]">
+                <LockKeyhole size={22} />
+              </div>
+
+              <div>
+                <h2 className="font-bold text-[#102A43] dark:text-white">
+                  Change Password
+                </h2>
+
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Keep your banking account secure.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <form
+            onSubmit={handlePasswordChange}
+            className="space-y-5 p-6"
+          >
+            {successMessage && (
+              <div className="flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700 dark:border-green-500/20 dark:bg-green-500/10 dark:text-green-400">
+                <CheckCircle2 size={19} className="mt-0.5 shrink-0" />
+                <p>{successMessage}</p>
+              </div>
+            )}
+
+            {errorMessage && (
+              <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400">
+                <AlertCircle size={19} className="mt-0.5 shrink-0" />
+                <p>{errorMessage}</p>
+              </div>
+            )}
+
+            {passwordField(
+              "Current Password",
+              currentPassword,
+              setCurrentPassword,
+              showCurrent,
+              () => setShowCurrent((prev) => !prev),
+              "Enter your current password"
+            )}
+
+            {passwordField(
+              "New Password",
+              newPassword,
+              setNewPassword,
+              showNew,
+              () => setShowNew((prev) => !prev),
+              "Enter your new password"
+            )}
+
+            {passwordField(
+              "Confirm New Password",
+              confirmPassword,
+              setConfirmPassword,
+              showConfirm,
+              () => setShowConfirm((prev) => !prev),
+              "Confirm your new password"
+            )}
+
+            <div className="rounded-xl bg-[#F4F7FB] p-4 dark:bg-[#0B1726]">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[#102A43] dark:text-white">
+                <KeyRound
+                  size={17}
+                  className="text-[#176B87] dark:text-[#14B8A6]"
+                />
+                Password requirements
+              </div>
+
+              <ul className="mt-2 space-y-1 text-xs text-slate-500 dark:text-slate-400">
+                <li>• Minimum 8 characters</li>
+                <li>• Maximum 128 characters</li>
+                <li>• Must be different from your current password</li>
+                <li>• Confirmation must match your new password</li>
+              </ul>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={isLoading || !user}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#176B87] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#102A43] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    Updating Password...
+                  </>
+                ) : (
+                  <>
+                    <LockKeyhole size={18} />
+                    Update Password
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </section>
+
+        {/* Security Information */}
+        <div className="flex items-start gap-3 rounded-2xl border border-[#176B87]/15 bg-[#176B87]/5 p-5 dark:border-[#14B8A6]/20 dark:bg-[#14B8A6]/5">
+          <ShieldCheck
+            size={22}
+            className="mt-0.5 shrink-0 text-[#176B87] dark:text-[#14B8A6]"
+          />
+
+          <div>
+            <h3 className="text-sm font-bold text-[#102A43] dark:text-white">
+              Account Security
+            </h3>
+
+            <p className="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-400">
+              Never share your password or banking credentials with
+              anyone. If you notice suspicious account activity,
+              change your password immediately.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
