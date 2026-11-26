@@ -7,26 +7,29 @@ import {
   ArrowRight,
   ArrowUpRight,
   CheckCircle2,
+  Sparkles,
 } from "lucide-react";
 
 const steps = [
   {
     number: "01",
     title: "Create Your Account",
+    subtitle: "Get started in minutes",
     description:
-      "Start by registering with your basic information and creating your digital banking account.",
+      "Begin your digital banking journey with a simple registration process. Provide your basic details and create secure login credentials.",
     icon: UserRoundPlus,
     points: [
-      "Simple registration process",
-      "Provide your basic details",
+      "Quick and simple registration",
+      "Submit your basic information",
       "Create secure login credentials",
     ],
   },
   {
     number: "02",
     title: "Verify Your Identity",
+    subtitle: "Your security comes first",
     description:
-      "Complete the required identity verification process to help protect your banking account.",
+      "Complete the identity verification process by submitting the required information. Your application will be reviewed for approval.",
     icon: ClipboardCheck,
     points: [
       "Submit required information",
@@ -37,123 +40,143 @@ const steps = [
   {
     number: "03",
     title: "Start Banking",
+    subtitle: "Everything in one place",
     description:
-      "After approval, access your banking dashboard and explore the available services.",
+      "Once approved, access your personal banking dashboard and start managing your accounts and financial activities.",
     icon: Landmark,
     points: [
-      "Access your dashboard",
-      "Manage banking accounts",
-      "Explore available services",
+      "Access your banking dashboard",
+      "Manage your bank accounts",
+      "Explore digital banking services",
     ],
   },
 ];
 
 export default function HowItWorks() {
   return (
-    <section className="relative overflow-hidden bg-[#F4F7FB] px-5 py-20 dark:bg-[#102A43] sm:px-8 lg:py-24">
+    <section className="relative isolate overflow-hidden bg-[#F4F7FB] px-5 py-20 dark:bg-[#0B1726] sm:px-8 lg:py-28">
+      {/* Background Decorations */}
+      <div className="pointer-events-none absolute -left-40 top-10 -z-10 h-96 w-96 rounded-full bg-[#14B8A6]/10 blur-[120px]" />
+      <div className="pointer-events-none absolute -right-40 bottom-0 -z-10 h-96 w-96 rounded-full bg-[#176B87]/10 blur-[120px]" />
 
-      {/* Background Decoration */}
-      <div className="pointer-events-none absolute -left-32 top-10 h-80 w-80 rounded-full bg-[#14B8A6]/10 blur-[110px]" />
-
-      <div className="relative mx-auto max-w-7xl">
-
+      <div className="mx-auto max-w-7xl">
         {/* Section Heading */}
         <div className="mx-auto mb-16 max-w-2xl text-center">
-          <span className="inline-flex rounded-full border border-[#14B8A6]/20 bg-[#14B8A6]/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#176B87] dark:text-[#14B8A6]">
-            Simple Process
-          </span>
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#14B8A6]/25 bg-[#14B8A6]/10 px-4 py-2">
+            <Sparkles size={14} className="text-[#14B8A6]" />
+            <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#176B87] dark:text-[#14B8A6]">
+              Simple Process
+            </span>
+          </div>
 
-          <h2 className="mt-5 text-3xl font-extrabold leading-tight text-[#102A43] dark:text-white sm:text-4xl lg:text-5xl">
-            How It
-            <span className="text-[#14B8A6]"> Works.</span>
+          <h2 className="mt-6 text-3xl font-extrabold leading-tight tracking-tight text-[#102A43] dark:text-white sm:text-4xl lg:text-5xl">
+            Your Banking Journey,
+            <span className="mt-2 block text-[#14B8A6]">
+              Made Simple.
+            </span>
           </h2>
 
-          <p className="mt-5 text-sm leading-7 text-slate-600 dark:text-slate-300 sm:text-base">
-            Getting started with digital banking is simple.
-            Follow these three steps to begin your journey.
+          <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-slate-600 dark:text-slate-400 sm:text-base">
+            Getting started with digital banking has never been easier.
+            Follow three simple steps and take control of your finances.
           </p>
         </div>
 
         {/* Steps */}
-        <div className="relative grid gap-7 md:grid-cols-3">
+        <div className="relative grid gap-6 md:grid-cols-3">
+          {/* Connecting Line */}
+          <div className="absolute left-[17%] right-[17%] top-12 hidden h-px bg-gradient-to-r from-[#176B87]/20 via-[#14B8A6] to-[#176B87]/20 md:block" />
 
-          {steps.map((step) => {
+          {steps.map((step, index) => {
             const Icon = step.icon;
 
             return (
               <div
                 key={step.number}
-                className="group relative flex flex-col rounded-3xl border border-white/80 bg-white/75 p-7 shadow-[0_10px_40px_rgba(16,42,67,0.05)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:border-[#14B8A6]/50 hover:shadow-xl dark:border-white/10 dark:bg-white/[0.05] sm:p-8"
+                className="group relative flex flex-col rounded-3xl border border-slate-200/80 bg-white p-7 shadow-[0_12px_40px_rgba(16,42,67,0.05)] transition-all duration-300 hover:-translate-y-2 hover:border-[#14B8A6]/50 hover:shadow-[0_20px_50px_rgba(20,184,166,0.12)] dark:border-white/10 dark:bg-[#14283D] sm:p-8"
               >
+                {/* Number and Icon */}
+                <div className="relative z-10 flex items-center justify-between">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-4 border-white bg-gradient-to-br from-[#176B87] to-[#14B8A6] text-white shadow-lg shadow-[#176B87]/20 transition-transform duration-300 group-hover:scale-110 dark:border-[#14283D]">
+                    <Icon size={28} strokeWidth={1.8} />
+                  </div>
 
-                {/* Step Number */}
-                <div className="flex items-center justify-between">
-                  <span className="text-4xl font-black text-slate-200 dark:text-white/10">
+                  <span className="text-5xl font-black tracking-tighter text-slate-100 transition-colors group-hover:text-[#14B8A6]/20 dark:text-white/[0.06]">
                     {step.number}
                   </span>
-
-                  <ArrowRight
-                    size={20}
-                    className="text-[#14B8A6] transition-transform group-hover:translate-x-2"
-                  />
-                </div>
-
-                {/* Icon */}
-                <div className="mt-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#176B87] to-[#14B8A6] text-white shadow-lg shadow-[#176B87]/20 transition-transform duration-300 group-hover:scale-110">
-                  <Icon size={30} strokeWidth={1.8} />
                 </div>
 
                 {/* Content */}
-                <h3 className="mt-7 text-xl font-bold text-[#102A43] dark:text-white">
-                  {step.title}
-                </h3>
+                <div className="mt-7">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#14B8A6]">
+                    Step {index + 1}
+                  </span>
 
-                <p className="mt-3 min-h-[84px] text-sm leading-7 text-slate-600 dark:text-slate-400">
-                  {step.description}
-                </p>
+                  <h3 className="mt-2 text-xl font-bold text-[#102A43] dark:text-white">
+                    {step.title}
+                  </h3>
 
-                {/* Step Checklist */}
+                  <p className="mt-1 text-xs font-semibold text-[#176B87] dark:text-[#14B8A6]">
+                    {step.subtitle}
+                  </p>
+
+                  <p className="mt-4 min-h-[105px] text-sm leading-7 text-slate-600 dark:text-slate-400">
+                    {step.description}
+                  </p>
+                </div>
+
+                {/* Checklist */}
                 <div className="mt-5 space-y-3 border-t border-slate-100 pt-5 dark:border-white/10">
                   {step.points.map((point) => (
                     <div
                       key={point}
-                      className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300"
+                      className="flex items-start gap-2.5 text-xs font-medium text-slate-600 dark:text-slate-300"
                     >
                       <CheckCircle2
                         size={16}
-                        className="shrink-0 text-[#14B8A6]"
+                        className="mt-0.5 shrink-0 text-[#14B8A6]"
                       />
-                      {point}
+                      <span>{point}</span>
                     </div>
                   ))}
                 </div>
 
+                {/* Bottom Accent */}
+                <div className="mt-7 h-1 w-12 rounded-full bg-gradient-to-r from-[#176B87] to-[#14B8A6] transition-all duration-300 group-hover:w-24" />
               </div>
             );
           })}
-
         </div>
 
         {/* Bottom CTA */}
-        <div className="mt-14 flex justify-center">
-          <Link
-            href="/register"
-            className="group inline-flex items-center gap-3 rounded-xl bg-gradient-to-r from-[#176B87] to-[#14B8A6] px-8 py-4 text-sm font-bold text-white shadow-lg shadow-[#176B87]/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-          >
-            Get Started Today
+        <div className="mt-16 overflow-hidden rounded-3xl bg-gradient-to-r from-[#102A43] via-[#176B87] to-[#0D9488] p-8 shadow-xl sm:p-10">
+          <div className="flex flex-col items-center justify-between gap-7 text-center sm:flex-row sm:text-left">
+            <div>
+              <h3 className="text-2xl font-extrabold text-white sm:text-3xl">
+                Ready to Get Started?
+              </h3>
+              <p className="mt-2 max-w-lg text-sm leading-6 text-white/75">
+                Take the first step towards a smarter and more convenient
+                banking experience.
+              </p>
+            </div>
 
-            <ArrowUpRight
-              size={18}
-              className="transition-transform group-hover:-translate-y-1 group-hover:translate-x-1"
-            />
-          </Link>
+            <Link
+              href="/register"
+              className="group inline-flex shrink-0 items-center gap-3 rounded-xl bg-white px-7 py-4 text-sm font-bold text-[#102A43] shadow-lg transition-all duration-300 hover:-translate-y-1 hover:bg-[#E6FFFA]"
+            >
+              Open an Account
+              <ArrowUpRight
+                size={18}
+                className="transition-transform group-hover:-translate-y-1 group-hover:translate-x-1"
+              />
+            </Link>
+          </div>
         </div>
-
       </div>
 
-      {/* Bottom Gradient Border */}
+      {/* Bottom Accent */}
       <div className="absolute bottom-0 left-0 h-0.5 w-full bg-gradient-to-r from-[#176B87] via-[#14B8A6] to-transparent" />
-
     </section>
   );
 }
