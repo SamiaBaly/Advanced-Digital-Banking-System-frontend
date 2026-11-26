@@ -16,7 +16,6 @@ import {
   ArrowLeftRight,
   ShieldAlert,
   Settings,
-  FileText,
   Clock,
   Inbox,
   AlertCircle,
@@ -29,6 +28,8 @@ import {
   type StaffNotification,
   type StaffNotificationCategory,
 } from "@/redux/api/staffNotificationApi";
+
+const PAGE_SIZE = 10;
 
 const categoryOptions = [
   { value: "all", label: "All Categories" },
@@ -169,7 +170,7 @@ function NotificationCard({
           </div>
         </div>
 
-        {!notification.isRead && (
+        {!notification.isRead ? (
           <button
             type="button"
             onClick={() => onMarkRead(notification._id)}
@@ -180,9 +181,7 @@ function NotificationCard({
             <Check className="h-4 w-4" />
             <span className="hidden sm:inline">Mark read</span>
           </button>
-        )}
-
-        {notification.isRead && (
+        ) : (
           <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
             <CheckCheck className="h-4 w-4" />
             <span className="hidden sm:inline">Read</span>
@@ -207,7 +206,7 @@ export default function NotificationsClient() {
     refetch,
   } = useGetStaffNotificationsQuery({
     page,
-    limit: 10,
+    limit: PAGE_SIZE,
     search,
     category: category as StaffNotificationCategory | "all",
     readStatus: readStatus as "all" | "read" | "unread",
@@ -223,7 +222,11 @@ export default function NotificationsClient() {
   const unreadCount = response?.unreadCount ?? 0;
   const pagination = response?.pagination;
 
-  const totalPages = pagination?.totalPages ?? 1;
+  const total = pagination?.total ?? 0;
+  const totalPages = Math.max(1, pagination?.totalPages ?? 1);
+
+  const startItem = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const endItem = Math.min(page * PAGE_SIZE, total);
 
   const handleMarkRead = async (id: string) => {
     try {
@@ -256,25 +259,34 @@ export default function NotificationsClient() {
     setPage(1);
   };
 
+  const visiblePages = Array.from(
+    { length: totalPages },
+    (_, index) => index + 1
+  ).filter(
+    (pageNumber) =>
+      pageNumber === 1 ||
+      pageNumber === totalPages ||
+      Math.abs(pageNumber - page) <= 1
+  );
+
   return (
     <div className="min-h-screen bg-[#F4F7FB] px-4 py-6 dark:bg-[#0B1726] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
+
         {/* Header */}
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#176B87]/10 dark:bg-[#14B8A6]/10">
-                <Bell className="h-6 w-6 text-[#176B87] dark:text-[#14B8A6]" />
-              </div>
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#176B87]/10 dark:bg-[#14B8A6]/10">
+              <Bell className="h-6 w-6 text-[#176B87] dark:text-[#14B8A6]" />
+            </div>
 
-              <div>
-                <h1 className="text-2xl font-bold text-[#102A43] dark:text-white sm:text-3xl">
-                  Notifications
-                </h1>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  Stay updated with your banking activities.
-                </p>
-              </div>
+            <div>
+              <h1 className="text-2xl font-bold text-[#102A43] dark:text-white sm:text-3xl">
+                Notifications
+              </h1>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                Stay updated with your banking activities.
+              </p>
             </div>
           </div>
 
@@ -313,7 +325,7 @@ export default function NotificationsClient() {
               <Bell className="h-5 w-5 text-[#176B87] dark:text-[#14B8A6]" />
             </div>
             <p className="mt-3 text-3xl font-bold text-[#102A43] dark:text-white">
-              {pagination?.total ?? 0}
+              {total}
             </p>
           </div>
 
@@ -337,7 +349,7 @@ export default function NotificationsClient() {
               <CheckCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <p className="mt-3 text-3xl font-bold text-emerald-600 dark:text-emerald-400">
-              {Math.max(0, (pagination?.total ?? 0) - unreadCount)}
+              {Math.max(0, total - unreadCount)}
             </p>
           </div>
         </div>
@@ -382,7 +394,7 @@ export default function NotificationsClient() {
           </div>
         </div>
 
-        {/* Notification list */}
+        {/* Notification List */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-[#102A43] dark:text-white">
@@ -390,7 +402,7 @@ export default function NotificationsClient() {
             </h2>
 
             <span className="text-xs text-slate-500 dark:text-slate-400">
-              {pagination?.total ?? 0} result(s)
+              {total} result(s)
             </span>
           </div>
 
@@ -443,22 +455,68 @@ export default function NotificationsClient() {
         </div>
 
         {/* Pagination */}
-        {!isLoading && !isError && totalPages > 1 && (
-          <div className="flex flex-col items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-[#14283D] sm:flex-row">
+        {!isLoading && !isError && total > 0 && (
+          <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-[#14283D] sm:flex-row sm:items-center sm:justify-between">
+
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Page {page} of {totalPages}
+              Showing{" "}
+              <span className="font-semibold text-[#102A43] dark:text-white">
+                {startItem}
+              </span>
+              {" - "}
+              <span className="font-semibold text-[#102A43] dark:text-white">
+                {endItem}
+              </span>
+              {" of "}
+              <span className="font-semibold text-[#102A43] dark:text-white">
+                {total}
+              </span>
+              {" notifications"}
             </p>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2">
               <button
                 type="button"
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                onClick={() => setPage(1)}
+                disabled={page === 1 || isFetching}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-[#1B354D]"
+              >
+                First
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setPage((current) => Math.max(1, current - 1))
+                }
                 disabled={page <= 1 || isFetching}
-                className="flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-[#1B354D]"
+                aria-label="Previous page"
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-[#1B354D]"
               >
                 <ChevronLeft className="h-4 w-4" />
-                Previous
               </button>
+
+              {visiblePages.map((pageNumber, index) => (
+                <div key={pageNumber} className="flex items-center gap-2">
+                  {index > 0 &&
+                    visiblePages[index - 1] !== pageNumber - 1 && (
+                      <span className="px-1 text-slate-400">...</span>
+                    )}
+
+                  <button
+                    type="button"
+                    onClick={() => setPage(pageNumber)}
+                    disabled={isFetching}
+                    aria-current={page === pageNumber ? "page" : undefined}
+                    className={`h-9 min-w-9 rounded-lg px-3 text-sm font-semibold transition disabled:cursor-not-allowed ${page === pageNumber
+                        ? "bg-[#176B87] text-white dark:bg-[#14B8A6] dark:text-[#102A43]"
+                        : "border border-slate-200 text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-[#1B354D]"
+                      }`}
+                  >
+                    {pageNumber}
+                  </button>
+                </div>
+              ))}
 
               <button
                 type="button"
@@ -466,10 +524,19 @@ export default function NotificationsClient() {
                   setPage((current) => Math.min(totalPages, current + 1))
                 }
                 disabled={page >= totalPages || isFetching}
-                className="flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-[#1B354D]"
+                aria-label="Next page"
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-[#1B354D]"
               >
-                Next
                 <ChevronRight className="h-4 w-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPage(totalPages)}
+                disabled={page >= totalPages || isFetching}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-[#1B354D]"
+              >
+                Last
               </button>
             </div>
           </div>

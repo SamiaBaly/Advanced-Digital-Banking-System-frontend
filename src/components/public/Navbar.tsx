@@ -15,15 +15,16 @@ import {
   UserRound,
   LogOut,
   ArrowUpRight,
-  Bell
+  Bell,
 } from "lucide-react";
+
 import { useGetMyNotificationsQuery } from "@/redux/api/notificationApi";
+import { useGetStaffNotificationsQuery } from "@/redux/api/staffNotificationApi";
 
 import ThemeToggle from "@/components/ThemeToggle";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { clearCredentials } from "@/redux/slices/authSlice";
 
-// Hydration-safe mounted state
 const subscribeToNothing = () => () => { };
 const getClientSnapshot = () => true;
 const getServerSnapshot = () => false;
@@ -54,17 +55,37 @@ export default function Navbar() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const pathname = usePathname();
-  const { data: notificationData } = useGetMyNotificationsQuery(
-    { page: 1, limit: 1 },
-    {
-      skip: !currentUser || currentUser.role !== "customer",
-      pollingInterval: 30000,
-    }
-  );
 
-  const unreadCount = notificationData?.data.unreadCount ?? 0;
+  const isCustomer = currentUser?.role === "customer";
+  const isStaff = currentUser?.role === "bank_staff";
 
-  // User Initials
+  // Customer notifications
+  const { data: customerNotificationData } =
+    useGetMyNotificationsQuery(
+      { page: 1, limit: 1 },
+      {
+        skip: !isCustomer,
+        pollingInterval: 30000,
+      }
+    );
+
+  // Staff notifications
+  const { data: staffNotificationData } =
+    useGetStaffNotificationsQuery(
+      { page: 1, limit: 1 },
+      {
+        skip: !isStaff,
+        pollingInterval: 30000,
+      }
+    );
+
+  // Role-based unread count
+  const unreadCount = isCustomer
+    ? customerNotificationData?.data?.unreadCount ?? 0
+    : isStaff
+      ? staffNotificationData?.unreadCount ?? 0
+      : 0;
+
   const initials =
     currentUser?.fullName
       .split(" ")
@@ -73,7 +94,6 @@ export default function Navbar() {
       .join("")
       .toUpperCase() || "U";
 
-  // Role-based Dashboard
   const dashboardPath =
     currentUser?.role === "admin"
       ? "/admin/dashboard"
@@ -81,7 +101,11 @@ export default function Navbar() {
         ? "/staff/dashboard"
         : "/customer/dashboard";
 
-  // Logout
+  const notificationPath =
+    currentUser?.role === "bank_staff"
+      ? "/staff/notifications"
+      : "/customer/notifications";
+
   const handleLogout = () => {
     logout();
     dispatch(clearCredentials());
@@ -92,7 +116,6 @@ export default function Navbar() {
     router.replace("/");
   };
 
-  // Active Navigation Class
   const getLinkClass = (href: string) => {
     const isActive = pathname === href;
 
@@ -102,7 +125,6 @@ export default function Navbar() {
       }`;
   };
 
-  // Close Avatar Dropdown on Outside Click and Escape
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
       if (
@@ -179,9 +201,11 @@ export default function Navbar() {
 
         {/* Right Actions */}
         <div className="flex shrink-0 items-center gap-2">
-          {currentUser?.role === "customer" && (
+
+          {/* Customer and Staff Notifications */}
+          {(isCustomer || isStaff) && (
             <Link
-              href="/customer/notifications"
+              href={notificationPath}
               aria-label={`Notifications, ${unreadCount} unread`}
               className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white/60 text-slate-700 transition hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
             >
@@ -194,6 +218,7 @@ export default function Navbar() {
               )}
             </Link>
           )}
+
           <ThemeToggle />
 
           {/* Guest User */}
@@ -211,7 +236,6 @@ export default function Navbar() {
                 className="group flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#176B87] to-[#14B8A6] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#176B87]/20 transition hover:-translate-y-0.5 hover:shadow-xl"
               >
                 Open Account
-
                 <ArrowUpRight
                   size={16}
                   className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
@@ -219,7 +243,6 @@ export default function Navbar() {
               </Link>
             </div>
           ) : (
-            /* Authenticated User Avatar */
             <div
               ref={avatarContainerRef}
               className="relative hidden sm:block"
@@ -259,7 +282,6 @@ export default function Navbar() {
                   role="menu"
                   className="absolute right-0 top-14 z-50 w-72 overflow-hidden rounded-2xl border border-white/60 bg-white/90 p-2 shadow-[0_15px_60px_rgba(16,42,67,0.18)] backdrop-blur-2xl animate-in fade-in slide-in-from-top-2 duration-200 dark:border-white/10 dark:bg-[#102A43]/95"
                 >
-                  {/* User Information */}
                   <div className="flex items-center gap-3 rounded-xl bg-slate-100/80 p-3 dark:bg-white/5">
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#176B87] to-[#14B8A6] font-bold text-white">
                       {initials}
@@ -278,7 +300,6 @@ export default function Navbar() {
 
                   <div className="my-2 h-px bg-slate-200 dark:bg-white/10" />
 
-                  {/* Dashboard */}
                   <Link
                     href={dashboardPath}
                     role="menuitem"
@@ -290,7 +311,6 @@ export default function Navbar() {
                     <ArrowUpRight size={15} className="ml-auto" />
                   </Link>
 
-                  {/* Profile */}
                   <Link
                     href="/profile"
                     role="menuitem"
@@ -303,7 +323,6 @@ export default function Navbar() {
 
                   <div className="my-2 h-px bg-slate-200 dark:bg-white/10" />
 
-                  {/* Logout */}
                   <button
                     type="button"
                     role="menuitem"
@@ -334,7 +353,6 @@ export default function Navbar() {
         {mobileOpen && (
           <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-50 mx-1 rounded-2xl border border-white/60 bg-white/95 p-3 shadow-xl shadow-[#102A43]/10 backdrop-blur-2xl dark:border-white/10 dark:bg-[#102A43]/95 lg:hidden">
 
-            {/* Mobile Links */}
             <div className="flex flex-col gap-1">
               {navLinks.map((link) => (
                 <Link
@@ -346,7 +364,6 @@ export default function Navbar() {
                 >
                   <span className="flex items-center justify-between">
                     {link.label}
-
                     {pathname === link.href && (
                       <span className="h-2 w-2 rounded-full bg-[#14B8A6]" />
                     )}
@@ -357,7 +374,6 @@ export default function Navbar() {
 
             <div className="my-3 h-px bg-slate-200 dark:bg-white/10" />
 
-            {/* Authenticated Mobile Menu */}
             {currentUser ? (
               <>
                 <div className="mb-2 flex items-center gap-3 rounded-xl bg-slate-100 p-3 dark:bg-white/5">
@@ -375,6 +391,25 @@ export default function Navbar() {
                     </p>
                   </div>
                 </div>
+
+                {(isCustomer || isStaff) && (
+                  <Link
+                    href={notificationPath}
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-[#176B87]/10 dark:text-white dark:hover:bg-white/10"
+                  >
+                    <span className="flex items-center gap-3">
+                      <Bell size={18} />
+                      Notifications
+                    </span>
+
+                    {unreadCount > 0 && (
+                      <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
+                  </Link>
+                )}
 
                 <Link
                   href={dashboardPath}
