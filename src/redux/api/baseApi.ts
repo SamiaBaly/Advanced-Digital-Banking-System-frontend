@@ -13,10 +13,14 @@ export const baseApi = createApi({
     credentials: "include",
 
     prepareHeaders: (headers) => {
-      const token = getToken();
+      try {
+        const token = getToken();
 
-      if (token) {
-        headers.set("Authorization", `Bearer ${token}`);
+        if (token) {
+          headers.set("Authorization", `Bearer ${token}`);
+        }
+      } catch (error) {
+        console.error("Failed to read authentication token:", error);
       }
 
       return headers;

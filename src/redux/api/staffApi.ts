@@ -34,6 +34,13 @@ export interface StaffQueryParams {
   status?: string;
 }
 
+export interface CreateStaffRequest {
+  fullName: string;
+  email: string;
+  phone: string;
+  password: string;
+}
+
 export interface UpdateStaffStatusRequest {
   id: string;
   userStatus: StaffStatus;
@@ -58,6 +65,18 @@ export const staffApi = baseApi.injectEndpoints({
       providesTags: ["Staff"],
     }),
 
+    createStaff: builder.mutation<
+      { success: boolean; message: string; data: StaffMember },
+      CreateStaffRequest
+    >({
+      query: (body) => ({
+        url: "/admin/staff",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Staff", "Dashboard"],
+    }),
+
     updateStaffStatus: builder.mutation<
       { success: boolean; message: string; data: StaffMember },
       UpdateStaffStatusRequest
@@ -76,5 +95,6 @@ export const staffApi = baseApi.injectEndpoints({
 export const {
   useGetStaffQuery,
   useGetStaffByIdQuery,
+  useCreateStaffMutation,
   useUpdateStaffStatusMutation,
 } = staffApi;
